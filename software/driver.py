@@ -38,7 +38,7 @@ def main():
     Program start
     '''
     # Constants
-    timeout = 0.0001
+    timeout = 0.01
 
     # Driver comms
     sock = robot_lib.create_tx_socket()
@@ -51,7 +51,7 @@ def main():
     input_states = {}
 
     # Stateful payload object
-    payload = {}
+    payload = { 'mode': 'remote'}
 
     # Program loop
     while True:
