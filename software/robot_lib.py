@@ -12,7 +12,7 @@ import time
 
 # Use this address and port for a UDP multicast group (note: this is not your ip address)
 MULTICAST_GROUP_ADDR = '224.1.1.1'
-MULTICAST_GROUP_PORT = 42069
+MULTICAST_GROUP_PORT = 42070
 multicast_group = (MULTICAST_GROUP_ADDR, MULTICAST_GROUP_PORT)
 LAST_SIGN_TIME = 0
 
@@ -113,9 +113,9 @@ def sock_recv_auth(sock, secret, time_threshold=1):
         return None
 
     # Check if we've seen the packet before
-    '''if sign_time <= LAST_SIGN_TIME:
-        print(f'Packet seen before (sent {sign_time} received {time_now})', file=sys.stderr)
-        return None'''
+    if sign_time <= LAST_SIGN_TIME:
+        #print(f'Packet seen before (sent {sign_time} received {time_now})', file=sys.stderr)
+        return None
 
     LAST_SIGN_TIME = time_now
 
