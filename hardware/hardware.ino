@@ -32,10 +32,8 @@ packet_t current_packet = {
   .pwm_right = 0
 };
 
-unsigned long heartbeat = 0;
-
-unsigned long kill_time = 1000;
-unsigned long kill_timeout = 0;
+unsigned long kill_timer = 1000;
+unsigned long kill_timeout_ms = 0;
 
 void setup() {
   pinMode(pin_dir_left, OUTPUT);
@@ -56,11 +54,7 @@ void setup() {
 }
 
 void loop() {
-  if(millis() >= heartbeat) {
-    Serial.println("Heartbeat");
-    heartbeat = millis() + 1000;
-  }
-  if(millis() >= kill_timeout) {
+  if(millis() >= kill_timer) {
     analogWrite(pin_pwm_left, 0);
     analogWrite(pin_pwm_right, 0);
   }
@@ -73,60 +67,54 @@ void loop() {
     switch(current_state) {
       case header_1:
         if (data == 0xf0) {
-          Serial.println("header_1 found");
           current_state = header_2;
-        }
-        else
-        {
-          Serial.println("header_1 failed");
         }
         break;
       case header_2:
         if (data == 0x0f) {
-          Serial.println("header_2 found");
           current_state = dir_left;
         }
         else
         {
-          Serial.println("header_2 failed");
           current_state = header_1;
         }
         break;
       case dir_left:
-        Serial.println("dir_left found");
         current_packet.dir_left = data;
         current_state = pwm_left;
         break;
       case pwm_left:
-        Serial.println("pwm_left found");
         current_packet.pwm_left = data;
         current_state = dir_right;
         break;
       case dir_right:
-        Serial.println("dir_right found");
         current_packet.dir_right = data;
         current_state = pwm_right;
         break;
       case pwm_right:
-        Serial.println("pwm_right found");
         current_packet.pwm_right = data;
         current_state = crc;
         break;
       case crc:
-        const uint8_t calc_crc = current_packet.dir_left ^ current_packet.pwm_left ^ current_packet.dir_right ^ current_packet.pwm_right;
-        if(calc_crc == data) {
-          Serial.println("crc found");
-          digitalWrite(pin_dir_left, current_packet.dir_left);
-          analogWrite(pin_pwm_left, current_packet.pwm_left);
-          digitalWrite(pin_dir_right, current_packet.dir_right);
-          analogWrite(pin_pwm_right, current_packet.pwm_right);
-          kill_timeout = millis() + kill_time;
+        const uint8_t calc_crc = current_packet.dir_left ^
+                                 current_packet.pwm_left ^
+                                 current_packet.dir_right ^
+                                 current_packet.pwm_right;
+        if(calc_crc != data) {
+          break;
         }
-        else
-        {
-          Serial.println("crc failed");
-        }
+        digitalWrite(pin_dir_left, current_packet.dir_left);
+        analogWrite(pin_pwm_left, current_packet.pwm_left);
+        digitalWrite(pin_dir_right, current_packet.dir_right);
+        analogWrite(pin_pwm_right, current_packet.pwm_right);
+        kill_timer = millis() + kill_timeout_ms;
+        Serial.println("Received (" +
+                     String(current_packet.dir_left) + ", " +
+                     String(current_packet.pwm_left) + ", " +
+                     String(current_packet.dir_right) + ", " +
+                     String(current_packet.pwm_right) + ")");
         current_state = header_1;
+        break;
     }
   }
 }

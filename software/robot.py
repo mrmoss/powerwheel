@@ -13,7 +13,8 @@ def handle_payload_motors(ser, payload):
     if not payload or 'motors' not in payload:
         return None
 
-    print(payload)
+    if payload['mode'] != 'manual':
+        print(payload)
 
     left = payload.get('motors', {}).get('left', 0)
     right = payload.get('motors', {}).get('right', 0)
@@ -59,7 +60,8 @@ def main():
     Program start
     '''
     # Constants
-    timeout = 0.001
+    timeout = 0.01
+    variables = { 'remote_timer': 0, 'remote_timeout_secs': 1 }
 
     # Driver comms
     sock = robot_lib.create_rx_socket()
@@ -96,12 +98,12 @@ def main():
                     continue
 
             # Main loop
-            loop(sock, ser, display, input_states)
+            loop(sock, ser, display, input_states, variables)
 
             # Give CPU a break
             time.sleep(timeout)
 
-def loop(sock, ser, display, input_states):
+def loop(sock, ser, display, input_states, variables):
     '''
     Program loop
     '''
@@ -109,29 +111,33 @@ def loop(sock, ser, display, input_states):
     if input_states.get(pygame.K_ESCAPE, False):
         quit()
 
+    # Print any serial data
+    handle_serial_data(ser)
+
     # Remote control
-    payload = None
+    remote_control = False
     while robot_lib.sock_has_data(sock):
-        payload = robot_lib.sock_recv_auth(sock, 'imaprettykitty', 5)
+        payload = robot_lib.sock_recv_auth(sock, 'imaprettykitty', 1)
         handle_payload_motors(ser, payload)
-    if payload:
+        variables['remote_timer'] = time.time() + variables['remote_timeout_secs']
+    if time.time() < variables['remote_timer']:
         return
 
-    '''# Local control
+    # Local control
     speed = 100
     if input_states.get(pygame.K_DOWN, False):
-        handle_payload_motors(ser, { 'motors': { 'left': -speed, 'right': -speed }})
+        handle_payload_motors(ser, { 'mode': 'manual', 'motors': { 'left': -speed, 'right': -speed }})
         return
     if input_states.get(pygame.K_UP, False):
-        handle_payload_motors(ser, { 'motors': { 'left': speed, 'right': speed }})
+        handle_payload_motors(ser, { 'mode': 'manual', 'motors': { 'left': speed, 'right': speed }})
         return
     if input_states.get(pygame.K_RIGHT, False):
-        handle_payload_motors(ser, { 'motors': { 'left': speed, 'right': -speed }})
+        handle_payload_motors(ser, { 'mode': 'manual', 'motors': { 'left': speed, 'right': -speed }})
         return
     if input_states.get(pygame.K_LEFT, False):
-        handle_payload_motors(ser, { 'motors': { 'left': -speed, 'right': speed }})
+        handle_payload_motors(ser, { 'mode': 'manual', 'motors': { 'left': -speed, 'right': speed }})
         return
-    handle_payload_motors(ser, { 'motors': { 'left': 0, 'right': 0 }})'''
+    handle_payload_motors(ser, { 'mode': 'manual', 'motors': { 'left': 0, 'right': 0 }})
 
 if __name__ == '__main__':
     main()
