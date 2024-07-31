@@ -12,7 +12,7 @@ import time
 
 # Use this address and port for a UDP multicast group (note: this is not your ip address)
 MULTICAST_GROUP_ADDR = '224.1.1.1'
-MULTICAST_GROUP_PORT = 42070
+MULTICAST_GROUP_PORT = 42069
 multicast_group = (MULTICAST_GROUP_ADDR, MULTICAST_GROUP_PORT)
 LAST_SIGN_TIME = 0
 
@@ -46,6 +46,7 @@ def create_rx_socket():
     # Create a membership struct and apply said membership to our socket
     mreq = struct.pack("4sl", socket.inet_aton(MULTICAST_GROUP_ADDR), socket.INADDR_ANY)
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+    sock.setsockopt(socket.IPPROTO_IP, socket.SO_REUSEADDR, 1)
 
     # Return socket for use
     return sock

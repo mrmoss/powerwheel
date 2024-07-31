@@ -66,42 +66,48 @@ def main():
     # Driver comms
     sock = robot_lib.create_rx_socket()
 
-    # Open serial
-    with serial.Serial(sys.argv[1], 115200, timeout=timeout) as ser:
+    while True:
+        try:
+            # Open serial
+            with serial.Serial(sys.argv[1], 115200, timeout=timeout) as ser:
 
-        # Give robot a few seconds to wake up
-        time.sleep(2)
+                # Give robot a few seconds to wake up
+                time.sleep(2)
 
-        # Init pygame
-        pygame.init()
-        display = pygame.display.set_mode((300, 300))
+                # Init pygame
+                pygame.init()
+                display = pygame.display.set_mode((300, 300))
 
-        # Input states used for tracking keyboard events
-        input_states = {}
+                # Input states used for tracking keyboard events
+                input_states = {}
 
-        # Program loop
-        while True:
-            # Get pygame events
-            for event in pygame.event.get():
-                # Gui close events == quit
-                if event.type == pygame.QUIT:
-                    quit()
+                # Program loop
+                while True:
+                    # Get pygame events
+                    for event in pygame.event.get():
+                        # Gui close events == quit
+                        if event.type == pygame.QUIT:
+                            quit()
 
-                # Key pressed
-                if event.type == pygame.KEYDOWN:
-                    input_states[event.key] = True
-                    continue
+                        # Key pressed
+                        if event.type == pygame.KEYDOWN:
+                            input_states[event.key] = True
+                            continue
 
-                # Key released
-                if event.type == pygame.KEYUP:
-                    input_states[event.key] = False
-                    continue
+                        # Key released
+                        if event.type == pygame.KEYUP:
+                            input_states[event.key] = False
+                            continue
 
-            # Main loop
-            loop(sock, ser, display, input_states, variables)
+                    # Main loop
+                    loop(sock, ser, display, input_states, variables)
 
-            # Give CPU a break
-            time.sleep(timeout)
+                    # Give CPU a break
+                    time.sleep(timeout)
+        except serial.serialutil.SerialException:
+            print('Restarting')
+            time.sleep(2)
+            pass
 
 def loop(sock, ser, display, input_states, variables):
     '''

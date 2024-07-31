@@ -32,8 +32,8 @@ packet_t current_packet = {
   .pwm_right = 0
 };
 
-unsigned long kill_timer = 1000;
-unsigned long kill_timeout_ms = 0;
+unsigned long kill_timer = 0;
+unsigned long kill_timeout_ms = 1000;
 
 void setup() {
   pinMode(pin_dir_left, OUTPUT);
