@@ -1,7 +1,9 @@
-const uint8_t pin_dir_left = 2;
-const uint8_t pin_pwm_left = 3;
-const uint8_t pin_dir_right = 4;
-const uint8_t pin_pwm_right = 5;
+const uint8_t pin_left_enl = 2;
+const uint8_t pin_left_enr = 3;
+const uint8_t pin_left_pwm = 4;
+const uint8_t pin_right_enl = 5;
+const uint8_t pin_right_enr = 6;
+const uint8_t pin_right_pwm = 7;
 
 const size_t serial_buffer_len = 1024;
 uint8_t serial_buffer[serial_buffer_len];
@@ -36,15 +38,19 @@ unsigned long kill_timer = 0;
 unsigned long kill_timeout_ms = 1000;
 
 void setup() {
-  pinMode(pin_dir_left, OUTPUT);
-  pinMode(pin_pwm_left, OUTPUT);
-  pinMode(pin_dir_right, OUTPUT);
-  pinMode(pin_pwm_right, OUTPUT);
+  pinMode(pin_left_enl, OUTPUT);
+  pinMode(pin_left_enr, OUTPUT);
+  pinMode(pin_left_pwm, OUTPUT);
+  digitalWrite(pin_left_enl, LOW);
+  digitalWrite(pin_left_enr, LOW);
+  digitalWrite(pin_left_pwm, LOW);
 
-  digitalWrite(pin_dir_left, LOW);
-  digitalWrite(pin_dir_right, LOW);
-  digitalWrite(pin_dir_right, LOW);
-  digitalWrite(pin_pwm_right, LOW);
+  pinMode(pin_right_enl, OUTPUT);
+  pinMode(pin_right_enr, OUTPUT);
+  pinMode(pin_right_pwm, OUTPUT);
+  digitalWrite(pin_right_enl, LOW);
+  digitalWrite(pin_right_enr, LOW);
+  digitalWrite(pin_right_pwm, LOW);
 
   Serial.setTimeout(1);
   Serial.begin(115200);
@@ -103,10 +109,29 @@ void loop() {
         if(calc_crc != data) {
           break;
         }
-        digitalWrite(pin_dir_left, current_packet.dir_left);
-        analogWrite(pin_pwm_left, current_packet.pwm_left);
-        digitalWrite(pin_dir_right, current_packet.dir_right);
-        analogWrite(pin_pwm_right, current_packet.pwm_right);
+
+        if(current_packet.dir_left == 0) {
+          digitalWrite(pin_left_enl, LOW);
+          digitalWrite(pin_left_enr, HIGH);
+        }
+        else
+        {
+          digitalWrite(pin_left_enl, HIGH);
+          digitalWrite(pin_left_enr, LOW);
+        }
+        analogWrite(pin_left_pwm, current_packet.pwm_left);
+
+        if(current_packet.dir_left == 0) {
+          digitalWrite(pin_left_enl, LOW);
+          digitalWrite(pin_left_enr, HIGH);
+        }
+        else
+        {
+          digitalWrite(pin_right_enl, HIGH);
+          digitalWrite(pin_right_enr, LOW);
+        }
+        analogWrite(pin_right_pwm, current_packet.pwm_right);
+
         kill_timer = millis() + kill_timeout_ms;
         Serial.println("Received (" +
                      String(current_packet.dir_left) + ", " +
