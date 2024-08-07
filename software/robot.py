@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
+'''
+Robot side runner
+'''
 import sys
 import time
 import pygame
 import serial
 
+import shared
 import robot_lib
 
 def handle_payload_motors(ser, payload):
@@ -48,12 +52,6 @@ def handle_serial_data(ser):
         except UnicodeDecodeError:
             pass
 
-def quit():
-    '''
-    Quits pygame and kills process
-    '''
-    pygame.quit()
-    sys.exit(0)
 
 def main():
     '''
@@ -78,8 +76,14 @@ def main():
                 pygame.init()
                 display = pygame.display.set_mode((300, 300))
 
+                # Init joystick
+                pygame.joystick.init()
+                joystick = pygame.joystick.Joystick(0)
+                joystick.init()
+                joystick_deadzone = 0.1
+
                 # Input states used for tracking keyboard events
-                input_states = {}
+                input_states = { 'joy': {} }
 
                 # Program loop
                 while True:
@@ -87,7 +91,7 @@ def main():
                     for event in pygame.event.get():
                         # Gui close events == quit
                         if event.type == pygame.QUIT:
-                            quit()
+                            shared.quit()
 
                         # Key pressed
                         if event.type == pygame.KEYDOWN:
@@ -99,6 +103,13 @@ def main():
                             input_states[event.key] = False
                             continue
 
+                        # Joystick axis moved
+                        if event.type == pygame.JOYAXISMOTION:
+                            val = event.value
+                            if (val < 0 and val > -joystick_deadzone) or (val > 0 and val < joystick_deadzone):
+                                val = 0
+                            input_states['joy'][event.axis] = val
+
                     # Main loop
                     loop(sock, ser, display, input_states, variables)
 
@@ -107,7 +118,6 @@ def main():
         except serial.serialutil.SerialException:
             print('Restarting')
             time.sleep(2)
-            pass
 
 def loop(sock, ser, display, input_states, variables):
     '''
@@ -115,13 +125,12 @@ def loop(sock, ser, display, input_states, variables):
     '''
     # Quit
     if input_states.get(pygame.K_ESCAPE, False):
-        quit()
+        shared.quit()
 
     # Print any serial data
     handle_serial_data(ser)
 
     # Remote control
-    remote_control = False
     while robot_lib.sock_has_data(sock):
         payload = robot_lib.sock_recv_auth(sock, 'imaprettykitty', 1)
         handle_payload_motors(ser, payload)
@@ -143,7 +152,17 @@ def loop(sock, ser, display, input_states, variables):
     if input_states.get(pygame.K_LEFT, False):
         handle_payload_motors(ser, { 'mode': 'manual', 'motors': { 'left': -speed, 'right': speed }})
         return
+
+    if input_states['joy']:
+        axis_x = input_states['joy'].get(2, 0)
+        axis_y = -input_states['joy'].get(3, 0)
+        left = shared.clamp((axis_y + axis_x) * speed, -speed, speed)
+        right = shared.clamp((axis_y - axis_x) * speed, -speed, speed)
+        handle_payload_motors(ser, { 'mode': 'manual', 'motors': {'left': left, 'right': right }})
+        return
+
     handle_payload_motors(ser, { 'mode': 'manual', 'motors': { 'left': 0, 'right': 0 }})
+
 
 if __name__ == '__main__':
     main()
