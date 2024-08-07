@@ -25,8 +25,8 @@ def handle_payload_motors(ser, payload):
 
     dir_left = int(left < 0)
     dir_right = int(right < 0)
-    pwm_left = abs(left)
-    pwm_right = abs(right)
+    pwm_left = int(abs(left))
+    pwm_right = int(abs(right))
 
     crc = dir_left ^ pwm_left ^ dir_right ^ pwm_right
     data_bytes = [0xf0, 0x0f, dir_left, pwm_left, dir_right, pwm_right, crc]
@@ -139,7 +139,7 @@ def loop(sock, ser, display, input_states, variables):
         return
 
     # Local control
-    speed = 100
+    speed = 255
     if input_states.get(pygame.K_DOWN, False):
         handle_payload_motors(ser, { 'mode': 'manual', 'motors': { 'left': -speed, 'right': -speed }})
         return
@@ -156,8 +156,8 @@ def loop(sock, ser, display, input_states, variables):
     if input_states['joy']:
         axis_x = input_states['joy'].get(2, 0)
         axis_y = -input_states['joy'].get(3, 0)
-        left = shared.clamp((axis_y + axis_x) * speed, -speed, speed)
-        right = shared.clamp((axis_y - axis_x) * speed, -speed, speed)
+        left = shared.clamp((axis_y - axis_x) * speed, -speed, speed)
+        right = shared.clamp((axis_y + axis_x) * speed, -speed, speed)
         handle_payload_motors(ser, { 'mode': 'manual', 'motors': {'left': left, 'right': right }})
         return
 
