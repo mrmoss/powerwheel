@@ -1,11 +1,11 @@
 const uint8_t pin_left_enl = 2;
 const uint8_t pin_left_enr = 3;
-const uint8_t pin_left_pwml = 4;
-const uint8_t pin_left_pwmr = 5;
+const uint8_t pin_left_pwml = 5;
+const uint8_t pin_left_pwmr = 4;
 const uint8_t pin_right_enl = 6;
 const uint8_t pin_right_enr = 7;
-const uint8_t pin_right_pwml = 9;
-const uint8_t pin_right_pwmr = 8;
+const uint8_t pin_right_pwml = 8;
+const uint8_t pin_right_pwmr = 9;
 
 const size_t serial_buffer_len = 1024;
 uint8_t serial_buffer[serial_buffer_len];
@@ -101,30 +101,36 @@ void loop() {
           break;
         }
 
+        int val_l = (int)current_packet.motor_left * 2;
+
+        int val_r = (int)current_packet.motor_right * 2;
+
         if(current_packet.motor_left >= 0) {
-          analogWrite(pin_left_pwml, abs((int)current_packet.motor_left) * 2);
+          analogWrite(pin_left_pwml, abs(val_l));
           analogWrite(pin_left_pwmr, 0);
         }
         else
         {
           analogWrite(pin_left_pwml, 0);
-          analogWrite(pin_left_pwmr, abs((int)current_packet.motor_left) * 2);
+          analogWrite(pin_left_pwmr, abs(val_l));
         }
 
-        if(current_packet.motor_right == 0) {
-          analogWrite(pin_right_pwml, abs((int)current_packet.motor_right) * 2);
+        if(current_packet.motor_right >= 0) {
+          analogWrite(pin_right_pwml, abs(val_r));
           analogWrite(pin_right_pwmr, 0);
         }
         else
         {
           analogWrite(pin_right_pwml, 0);
-          analogWrite(pin_right_pwmr, abs((int)current_packet.motor_right) * 2);
+          analogWrite(pin_right_pwmr, abs(val_r));
         }
 
         kill_timer = millis() + kill_timeout_ms;
         Serial.println("Received (" +
                      String(current_packet.motor_left) + ", " +
-                     String(current_packet.motor_right) + ")");
+                     String(current_packet.motor_right) + ", " +
+                     String(val_l) + ", " +
+                     String(val_r) + ")");
 
         current_state = header_1;
         break;
