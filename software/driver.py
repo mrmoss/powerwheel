@@ -10,6 +10,7 @@ import robot_lib
 
 def handle_payload_motors(sock, payload):
     robot_lib.sock_send_auth(sock, 'imaprettykitty', payload)
+    print(payload)
 
 def loop(display, input_states, sock):
     '''
@@ -30,22 +31,23 @@ def loop(display, input_states, sock):
         handle_payload_motors(sock, { 'controller': 'driver', 'motors': { 'left': -speed, 'right': speed }})
         return
 
-    tank = False
+    tank = True
 
     if input_states['joy']:
         left = 0
         right = 0
+
         if tank:
+            left = -input_states['joy'].get(1, 0) * speed
+            right = -input_states['joy'].get(3, 0) * speed
+        else:
             axis_x = -input_states['joy'].get(2, 0)
             axis_y = -input_states['joy'].get(3, 0)
-            left = shared.clamp((axis_y + axis_x) * speed, -speed, speed)
-            right = shared.clamp((axis_y - axis_x) * speed, -speed, speed)
-        else:
-            left = -input_states['joy'].get(3, 0) * speed
-            right = -input_states['joy'].get(1, 0) * speed
+            left = (axis_y + axis_x) * speed
+            right = (axis_y - axis_x) * speed
 
         left = int(shared.clamp(left, -speed, speed))
-        right = int(shared.clamp(left, -speed, speed))
+        right = int(shared.clamp(right, -speed, speed))
 
         handle_payload_motors(sock, { 'controller': 'driver', 'motors': { 'left': left, 'right': right }})
         return

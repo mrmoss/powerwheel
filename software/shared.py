@@ -11,8 +11,14 @@ def joystick_init():
     Initializes joystick
     '''
     pygame.joystick.init()
+
     if pygame.joystick.get_count() > 0:
-        pygame.joystick.Joystick(0).init()
+        print('JOYSTICK FOUND')
+        joystick = pygame.joystick.Joystick(0)
+        joystick.init()
+        return joystick
+
+    return None
 
 def joystick_handle_axis_event(event):
     joystick_deadzone = 0.1
@@ -37,14 +43,14 @@ def quit():
 
 def loop(loop_func, control_mode, args):
     # Constants
-    timeout = 0.01
+    timeout = 0.1
 
     # Init pygame
     pygame.init()
     display = pygame.display.set_mode((300, 300))
 
     # Init joystick
-    joystick_init()
+    joystick = joystick_init()
 
     # Input states used for tracking keyboard events
     input_states = { 'joy': {} }
@@ -74,6 +80,7 @@ def loop(loop_func, control_mode, args):
             # Joystick axis moved
             if event.type == pygame.JOYAXISMOTION:
                 input_states['joy'][event.axis] = joystick_handle_axis_event(event)
+                continue
 
         # Escape key == quit
         if input_states.get(pygame.K_ESCAPE, False):
