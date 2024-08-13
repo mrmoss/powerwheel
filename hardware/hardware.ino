@@ -13,27 +13,21 @@ uint8_t serial_buffer[serial_buffer_len];
 enum states_t {
   header_1,
   header_2,
-  dir_left,
-  pwm_left,
-  dir_right,
-  pwm_right,
+  motor_left,
+  motor_right,
   crc
 };
 
 struct packet_t {
-  uint8_t dir_left;
-  uint8_t pwm_left;
-  uint8_t dir_right;
-  uint8_t pwm_right;
+  int8_t motor_left;
+  int8_t motor_right;
 };
 
 states_t current_state = header_1;
 
 packet_t current_packet = {
-  .dir_left = 0,
-  .pwm_left = 0,
-  .dir_right = 0,
-  .pwm_right = 0
+  .motor_left = 0,
+  .motor_right = 0
 };
 
 unsigned long kill_timer = 0;
@@ -86,64 +80,51 @@ void loop() {
         break;
       case header_2:
         if (data == 0x0f) {
-          current_state = dir_left;
+          current_state = motor_left;
         }
         else
         {
           current_state = header_1;
         }
         break;
-      case dir_left:
-        current_packet.dir_left = data;
-        current_state = pwm_left;
+      case motor_left:
+        current_packet.motor_left = data;
+        current_state = motor_right;
         break;
-      case pwm_left:
-        current_packet.pwm_left = data;
-        current_state = dir_right;
-        break;
-      case dir_right:
-        current_packet.dir_right = data;
-        current_state = pwm_right;
-        break;
-      case pwm_right:
-        current_packet.pwm_right = data;
+      case motor_right:
+        current_packet.motor_right = data;
         current_state = crc;
         break;
       case crc:
-        const uint8_t calc_crc = current_packet.dir_left ^
-                                 current_packet.pwm_left ^
-                                 current_packet.dir_right ^
-                                 current_packet.pwm_right;
+        const uint8_t calc_crc = current_packet.motor_left ^ current_packet.motor_right;
         if(calc_crc != data) {
           break;
         }
 
-        if(current_packet.dir_left == 0) {
-          analogWrite(pin_left_pwml, current_packet.pwm_left);
+        if(current_packet.motor_left >= 0) {
+          analogWrite(pin_left_pwml, abs((int)current_packet.motor_left) * 2);
           analogWrite(pin_left_pwmr, 0);
         }
         else
         {
           analogWrite(pin_left_pwml, 0);
-          analogWrite(pin_left_pwmr, current_packet.pwm_left);
+          analogWrite(pin_left_pwmr, abs((int)current_packet.motor_left) * 2);
         }
 
-        if(current_packet.dir_right == 0) {
-          analogWrite(pin_right_pwml, current_packet.pwm_right);
+        if(current_packet.motor_right == 0) {
+          analogWrite(pin_right_pwml, abs((int)current_packet.motor_right) * 2);
           analogWrite(pin_right_pwmr, 0);
         }
         else
         {
           analogWrite(pin_right_pwml, 0);
-          analogWrite(pin_right_pwmr, current_packet.pwm_right);
+          analogWrite(pin_right_pwmr, abs((int)current_packet.motor_right) * 2);
         }
 
         kill_timer = millis() + kill_timeout_ms;
         Serial.println("Received (" +
-                     String(current_packet.dir_left) + ", " +
-                     String(current_packet.pwm_left) + ", " +
-                     String(current_packet.dir_right) + ", " +
-                     String(current_packet.pwm_right) + ")");
+                     String(current_packet.motor_left) + ", " +
+                     String(current_packet.motor_right) + ")");
 
         current_state = header_1;
         break;
