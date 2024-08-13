@@ -41,7 +41,7 @@ def handle_payload_motors(ser, payload):
     right = int(payload.get('motors', {}).get('right', 0))
 
     crc = left ^ right
-    ser.write(struct.pack('>BBbbB', 0xf0, 0x0f, left, right, crc))
+    ser.write(struct.pack('>BBbbb', 0xf0, 0x0f, left, right, crc))
 
     return True
 
