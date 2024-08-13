@@ -17,7 +17,7 @@ def handle_serial_data(ser):
     '''
     while True:
         try:
-            in_data = ser.read(1024)
+            in_data = ser.read(256)
         except serial.SerialException:
             break
 
