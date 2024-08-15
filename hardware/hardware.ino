@@ -1,11 +1,11 @@
 const uint8_t pin_left_enl = 2;
 const uint8_t pin_left_enr = 3;
-const uint8_t pin_left_pwml = 5;
-const uint8_t pin_left_pwmr = 4;
+const uint8_t pin_left_pwml = 9;
+const uint8_t pin_left_pwmr = 8;
 const uint8_t pin_right_enl = 6;
 const uint8_t pin_right_enr = 7;
-const uint8_t pin_right_pwml = 8;
-const uint8_t pin_right_pwmr = 9;
+const uint8_t pin_right_pwml = 4;
+const uint8_t pin_right_pwmr = 5;
 
 const size_t serial_buffer_len = 1024;
 uint8_t serial_buffer[serial_buffer_len];
