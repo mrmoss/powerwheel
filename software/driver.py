@@ -31,7 +31,7 @@ def loop(display, input_states, sock):
         handle_payload_motors(sock, { 'controller': 'driver', 'motors': { 'left': -speed, 'right': speed }})
         return
 
-    tank = True
+    tank = False
 
     if input_states['joy']:
         left = 0
@@ -39,12 +39,12 @@ def loop(display, input_states, sock):
 
         if tank:
             left = -input_states['joy'].get(1, 0) * speed
-            right = -input_states['joy'].get(3, 0) * speed
+            right = -input_states['joy'].get(4, 0) * speed
         else:
-            axis_x = -input_states['joy'].get(2, 0)
-            axis_y = -input_states['joy'].get(3, 0)
-            left = (axis_y + axis_x) * speed
-            right = (axis_y - axis_x) * speed
+            axis_x = -input_states['joy'].get(3, 0)
+            axis_y = -input_states['joy'].get(4, 0)
+            left = (axis_y - axis_x) * speed
+            right = (axis_y + axis_x) * speed
 
         left = int(shared.clamp(left, -speed, speed))
         right = int(shared.clamp(right, -speed, speed))
